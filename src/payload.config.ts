@@ -1,39 +1,44 @@
-// storage-adapter-import-placeholder
-import { postgresAdapter } from '@payloadcms/db-postgres'
-import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import path from 'path'
 import { buildConfig } from 'payload'
-import { fileURLToPath } from 'url'
-import sharp from 'sharp'
-
+import { postgresAdapter } from '@payloadcms/db-postgres'
+import { slateEditor } from '@payloadcms/richtext-slate'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
+import { Tenants } from './collections/Tenants'
+import { StudentSettings } from './collections/StudentSettings'
+import nodemailer from 'nodemailer'
+import { resendAdapter } from '@payloadcms/email-resend'
 
-const filename = fileURLToPath(import.meta.url)
-const dirname = path.dirname(filename)
 
 export default buildConfig({
+  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
+  secret: process.env.PAYLOAD_SECRET || 'YOUR-SECRET-KEY',
   admin: {
     user: Users.slug,
-    importMap: {
-      baseDir: path.resolve(dirname),
+    meta: {
+      titleSuffix: '- LMS Admin',
     },
   },
-  collections: [Users, Media],
-  editor: lexicalEditor(),
-  secret: process.env.PAYLOAD_SECRET || '',
-  typescript: {
-    outputFile: path.resolve(dirname, 'payload-types.ts'),
-  },
+  editor: slateEditor({}),
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },
   }),
-  sharp,
-  plugins: [
-    payloadCloudPlugin(),
-    // storage-adapter-placeholder
-  ],
+  collections: [Users, Media, Tenants, StudentSettings],
+  typescript: {
+    outputFile: 'src/payload-types.ts',
+  },
+  graphQL: {
+    schemaOutputFile: 'src/generated-schema.graphql',
+  },
+  upload: {
+    limits: {
+      fileSize: 5000000, // 5MB
+    },
+  },
+  email: resendAdapter({
+    defaultFromAddress: process.env.EMAIL_FROM || 'noreply@lms.com',
+    defaultFromName: 'LMS Platform',
+    apiKey: process.env.RESEND_API_KEY || '',
+  }),
 })
