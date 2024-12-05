@@ -1,0 +1,332 @@
+@startuml LMS System
+
+' Style configurations
+skinparam class {
+    BackgroundColor White
+    ArrowColor #666666
+    BorderColor #666666
+    AttributeFontSize 11
+    AttributeIconSize 11
+}
+
+' Core entities
+class Tenants {
+    +name: string <<required>>
+    +logo: Media
+    +contactEmail: string <<required>>
+    +subscriptionStatus: enum
+    +domain: string <<unique>>
+    +users: List<Users>
+    +courses: List<Courses>
+    +settings: TenantSettings
+}
+
+class Users {
+    +name: string <<required>>
+    +email: string <<required, unique>>
+    +role: UserRole
+    +tenant: Tenants <<required>>
+    +lastActive: date
+    +password: string <<hashed>>
+    +settings: StudentSettings
+    +achievements: List<Achievements>
+    +points: List<Points>
+    +notifications: List<Notifications>
+}
+
+class Courses {
+    +title: string <<required>>
+    +description: text
+    +instructor: Users
+    +tenant: Tenants <<required>>
+    +status: CourseStatus
+    +modules: List<Modules>
+    +startDate: date
+    +endDate: date
+    +announcements: List<Announcements>
+    +assignments: List<Assignments>
+    +certificates: List<Certificates>
+}
+
+class Modules {
+    +title: string <<required>>
+    +course: Courses <<required>>
+    +description: richText
+    +order: number <<required>>
+    +lessons: List<Lessons>
+    +status: PublishStatus
+    +prerequisites: List<Modules>
+}
+
+class Lessons {
+    +title: string <<required>>
+    +module: Modules <<required>>
+    +content: richText <<required>>
+    +media: List<Media>
+    +order: number
+    +quizzes: List<Quizzes>
+    +duration: number
+    +status: PublishStatus
+}
+
+' Learning content
+class Quizzes {
+    +title: string <<required>>
+    +lesson: Lessons <<required>>
+    +questions: List<Question>
+    +attemptsAllowed: number
+    +timeLimit: number
+    +passingScore: number
+    +shuffleQuestions: boolean
+    +showCorrectAnswers: boolean
+}
+
+class Assignments {
+    +title: string <<required>>
+    +description: richText
+    +course: Courses <<required>>
+    +lesson: Lessons
+    +dueDate: date
+    +maxScore: number
+    +submissions: List<Submissions>
+    +rubric: Map
+    +attachments: List<Media>
+}
+
+class Submissions {
+    +student: Users <<required>>
+    +assignment: Assignments <<required>>
+    +content: richText <<required>>
+    +files: List<Media>
+    +submissionDate: date <<required>>
+    +score: number
+    +feedback: richText
+    +status: SubmissionStatus
+}
+
+' Gamification
+class Points {
+    +student: Users <<required>>
+    +type: PointType
+    +amount: number <<required>>
+    +source: SourceType
+    +metadata: Map
+    +timestamp: date
+}
+
+class Badges {
+    +name: string <<required>>
+    +description: text
+    +icon: Media
+    +requiredPoints: number
+    +criteria: BadgeCriteria
+    +tenant: Tenants <<required>>
+    +levelRequired: number
+    +pointValues: Map
+}
+
+class Achievements {
+    +user: Users <<required>>
+    +badge: Badges <<required>>
+    +dateEarned: date <<required>>
+    +progress: number
+    +metadata: Map
+}
+
+class Streaks {
+    +student: Users <<required>>
+    +type: StreakType
+    +currentStreak: number
+    +longestStreak: number
+    +lastActivity: date <<required>>
+    +nextRequired: date <<required>>
+    +history: List<StreakEntry>
+}
+
+class Leaderboard {
+    +user: Users <<required>>
+    +tenant: Tenants <<required>>
+    +points: number <<required>>
+    +level: number <<required>>
+    +currentStreak: number
+    +longestStreak: number
+    +lastActivityDate: date
+    +timeframe: TimeframeType
+}
+
+' Communication & Collaboration
+class Notifications {
+    +subject: string <<required>>
+    +content: richText <<required>>
+    +type: NotificationType
+    +priority: PriorityLevel
+    +recipient: Users <<required>>
+    +read: boolean
+    +reference: Reference
+    +tenant: Tenants <<required>>
+}
+
+class Collaborations {
+    +name: string <<required>>
+    +type: CollaborationType
+    +course: Courses <<required>>
+    +participants: List<Users> <<required>>
+    +features: List<Feature>
+    +status: CollabStatus
+}
+
+class Announcements {
+    +title: string <<required>>
+    +content: richText <<required>>
+    +course: Courses <<required>>
+    +dateCreated: date <<required>>
+    +notifyUsers: List<Users>
+    +attachments: List<Media>
+}
+
+' Settings & Support
+class TenantSettings {
+    +tenant: Tenants <<required>>
+    +branding: BrandingConfig
+    +featureToggles: FeatureConfig
+    +notificationPreferences: NotificationConfig
+}
+
+class StudentSettings {
+    +user: Users <<required>>
+    +notificationPreferences: NotificationConfig
+    +accessibility: AccessibilityConfig
+    +language: string
+    +timezone: string
+}
+
+class SupportTickets {
+    +tenant: Tenants <<required>>
+    +user: Users <<required>>
+    +description: text <<required>>
+    +status: TicketStatus
+    +priority: PriorityLevel
+    +category: string
+    +attachments: List<Media>
+    +responses: List<Response>
+}
+
+class Media {
+    +filename: string <<required>>
+    +mimeType: string <<required>>
+    +filesize: number
+    +width: number
+    +height: number
+    +alt: string
+    +tenant: Tenants
+}
+
+class Certificates {
+    +course: Courses <<required>>
+    +student: Users <<required>>
+    +issueDate: date <<required>>
+    +certificateUrl: string <<required>>
+    +template: Media
+    +metadata: Map
+}
+
+' Enums
+enum UserRole {
+    ADMIN
+    INSTRUCTOR
+    STUDENT
+}
+
+enum CourseStatus {
+    PUBLISHED
+    DRAFT
+    ARCHIVED
+}
+
+enum PublishStatus {
+    PUBLISHED
+    DRAFT
+}
+
+enum SubmissionStatus {
+    SUBMITTED
+    GRADED
+    RETURNED
+}
+
+enum PointType {
+    LESSON_COMPLETE
+    QUIZ_SCORE
+    ASSIGNMENT_SUBMIT
+    STREAK_BONUS
+}
+
+enum StreakType {
+    LOGIN
+    PROGRESS
+    QUIZ
+    ASSIGNMENT
+}
+
+enum TimeframeType {
+    WEEKLY
+    MONTHLY
+    ALL_TIME
+}
+
+enum PriorityLevel {
+    LOW
+    MEDIUM
+    HIGH
+}
+
+enum CollabStatus {
+    ACTIVE
+    ARCHIVED
+}
+
+enum TicketStatus {
+    OPEN
+    IN_PROGRESS
+    RESOLVED
+}
+
+' Relationships
+Tenants "1" -- "*" Users : owns >
+Tenants "1" -- "*" Courses : manages >
+Tenants "1" -- "1" TenantSettings : configures >
+Tenants "1" -- "*" Media : owns >
+
+Users "1" -- "1" StudentSettings : has >
+Users "1" -- "*" Points : earns >
+Users "1" -- "*" Achievements : unlocks >
+Users "1" -- "*" Notifications : receives >
+Users "*" -- "*" Collaborations : participates >
+Users "1" -- "*" Certificates : earns >
+Users "1" -- "*" SupportTickets : creates >
+
+Courses "1" -- "*" Modules : contains >
+Courses "1" -- "*" Announcements : publishes >
+Courses "1" -- "*" Assignments : includes >
+Courses "1" -- "*" Certificates : issues >
+Courses "*" -- "*" Users : enrolls >
+
+Modules "1" -- "*" Lessons : contains >
+Modules "*" -- "*" Modules : requires >
+
+Lessons "1" -- "*" Quizzes : contains >
+Lessons "1" -- "*" Media : uses >
+
+Assignments "1" -- "*" Submissions : receives >
+Assignments "1" -- "*" Media : includes >
+
+Submissions "1" -- "*" Media : attaches >
+
+Badges "*" -- "*" Users : awards >
+Streaks "1" -- "1" Users : tracks >
+Leaderboard "*" -- "1" Users : ranks >
+
+Announcements "*" -- "*" Users : notifies >
+Announcements "1" -- "*" Media : attaches >
+
+@enduml 
