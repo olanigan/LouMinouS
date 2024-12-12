@@ -7,19 +7,30 @@ type AccessArgs = {
   }
 }
 
+interface BeforeValidateHookData {
+  data?: {
+    name?: string
+    slug?: string
+    [key: string]: any
+  }
+}
+
 export const Tenants: CollectionConfig = {
   slug: 'tenants',
   admin: {
     useAsTitle: 'name',
     group: 'System',
+    defaultColumns: ['name', 'slug', 'status'],
+    description: 'Organizations using the platform',
+    listSearchableFields: ['name', 'slug', 'domain'],
   },
   access: {
     read: ({ req: { user } }: AccessArgs) => {
       if (user?.role === 'admin') return true
       return {
         id: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
     create: ({ req: { user } }: AccessArgs) => user?.role === 'admin',
@@ -31,6 +42,10 @@ export const Tenants: CollectionConfig = {
       name: 'name',
       type: 'text',
       required: true,
+      admin: {
+        disableBulkEdit: false,
+        description: 'The display name of the tenant',
+      },
     },
     {
       name: 'slug',
@@ -38,6 +53,7 @@ export const Tenants: CollectionConfig = {
       required: true,
       unique: true,
       admin: {
+        disableBulkEdit: false,
         description: 'URL-friendly identifier for the tenant',
       },
     },
@@ -68,12 +84,12 @@ export const Tenants: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [
-      ({ data = {} }) => {
+      ({ data = {} }: BeforeValidateHookData) => {
         if (data?.name && !data?.slug) {
           data.slug = data.name.toLowerCase().replace(/\s+/g, '-')
         }
         return data
-      }
-    ]
-  }
-} 
+      },
+    ],
+  },
+}

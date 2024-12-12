@@ -914,11 +914,62 @@ export const Progress: CollectionConfig = {
 Create `lib/payload/editor.ts`:
 
 ```typescript
-import { slateEditor } from '@payloadcms/richtext-slate'
-import { BlocksFeature } from '@payloadcms/richtext-slate/features'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { BlocksFeature } from '@payloadcms/richtext-lexical'
 
-export const editorConfig = slateEditor({
+export const editorConfig = lexicalEditor({
+  features: ({ defaultFeatures }) => [
+    ...defaultFeatures,
+    BlocksFeature({
+      blocks: [
+        {
+          slug: 'callout',
+          fields: [
+            {
+              name: 'type',
+              type: 'select',
+              required: true,
+              options: [
+                { label: 'Info', value: 'info' },
+                { label: 'Warning', value: 'warning' },
+                { label: 'Success', value: 'success' },
+                { label: 'Error', value: 'error' },
+              ],
+            },
+            {
+              name: 'content',
+              type: 'richText',
+            },
+          ],
+        },
+        {
+          slug: 'code',
+          fields: [
+            {
+              name: 'language',
+              type: 'select',
+              required: true,
+              options: [
+                { label: 'JavaScript', value: 'javascript' },
+                { label: 'TypeScript', value: 'typescript' },
+                { label: 'Python', value: 'python' },
+                { label: 'HTML', value: 'html' },
+                { label: 'CSS', value: 'css' },
+                { label: 'SQL', value: 'sql' },
+              ],
+            },
+            {
+              name: 'code',
+              type: 'textarea',
+              required: true,
+            },
+          ],
+        },
+      ],
+    }),
+  ],
   admin: {
+    // Default elements - can be modified as needed
     elements: [
       'h1',
       'h2',
@@ -932,8 +983,8 @@ export const editorConfig = slateEditor({
       'link',
       'relationship',
       'upload',
-      'indent',
     ],
+    // Default leaves/formatting options
     leaves: [
       'bold',
       'italic',
@@ -963,52 +1014,27 @@ export const editorConfig = slateEditor({
       },
     },
   },
-  features: [
-    BlocksFeature({
-      blocks: [
-        {
-          slug: 'callout',
-          fields: [
-            {
-              name: 'type',
-              type: 'select',
-              options: [
-                { label: 'Info', value: 'info' },
-                { label: 'Warning', value: 'warning' },
-                { label: 'Success', value: 'success' },
-                { label: 'Error', value: 'error' },
-              ],
-            },
-            {
-              name: 'content',
-              type: 'richText',
-            },
-          ],
-        },
-        {
-          slug: 'code',
-          fields: [
-            {
-              name: 'language',
-              type: 'select',
-              options: [
-                { label: 'JavaScript', value: 'javascript' },
-                { label: 'TypeScript', value: 'typescript' },
-                { label: 'Python', value: 'python' },
-                { label: 'HTML', value: 'html' },
-                { label: 'CSS', value: 'css' },
-                { label: 'SQL', value: 'sql' },
-              ],
-            },
-            {
-              name: 'code',
-              type: 'textarea',
-            },
-          ],
-        },
-      ],
-    }),
-  ],
+})
+```
+
+The Lexical editor provides several advantages over Slate:
+- More intuitive custom element creation
+- Built-in "/" command menu
+- Popup formatting toolbar
+- Drag and drop support
+- Ability to reuse Payload blocks within rich text
+- Better developer experience
+- More stable and maintained by Meta
+
+To use this editor configuration, update your `payload.config.ts` to include:
+
+```typescript
+import { buildConfig } from 'payload/config'
+import { editorConfig } from './lib/payload/editor'
+
+export default buildConfig({
+  editor: editorConfig,
+  // ... rest of your config
 })
 ```
 

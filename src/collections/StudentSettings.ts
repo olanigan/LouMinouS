@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
 
 type AccessArgs = {
@@ -7,19 +7,30 @@ type AccessArgs = {
   }
 }
 
+interface BeforeChangeHookData {
+  data: {
+    user?: string | number
+    [key: string]: any
+  }
+  req: PayloadRequest
+}
+
 export const StudentSettings: CollectionConfig = {
   slug: 'student-settings',
   admin: {
     useAsTitle: 'user',
     group: 'System',
+    defaultColumns: ['user', 'theme', 'language'],
+    description: 'Student preferences and settings',
+    listSearchableFields: ['user'],
   },
   access: {
     read: ({ req: { user } }: AccessArgs) => {
       if (user?.role === 'admin') return true
       return {
         user: {
-          equals: user?.id
-        }
+          equals: user?.id,
+        },
       }
     },
     create: ({ req: { user } }: AccessArgs) => !!user,
@@ -27,8 +38,8 @@ export const StudentSettings: CollectionConfig = {
       if (user?.role === 'admin') return true
       return {
         user: {
-          equals: user?.id
-        }
+          equals: user?.id,
+        },
       }
     },
     delete: ({ req: { user } }: AccessArgs) => user?.role === 'admin',
@@ -40,6 +51,9 @@ export const StudentSettings: CollectionConfig = {
       relationTo: 'users',
       required: true,
       unique: true,
+      admin: {
+        description: 'The user this settings belong to',
+      },
     },
     {
       name: 'preferences',
@@ -54,6 +68,9 @@ export const StudentSettings: CollectionConfig = {
             { label: 'System', value: 'system' },
           ],
           defaultValue: 'system',
+          admin: {
+            description: 'The default theme for the user',
+          },
         },
         {
           name: 'emailNotifications',
@@ -78,18 +95,23 @@ export const StudentSettings: CollectionConfig = {
               label: 'Achievement notifications',
             },
           ],
+          admin: {
+            description: 'Email notifications for the user',
+          },
         },
       ],
     },
   ],
   hooks: {
     beforeChange: [
-      ({ req, data }) => {
-        if (!data.user && req.user) {
-          data.user = req.user.id
+      ({ req, data }: BeforeChangeHookData) => {
+        if (!data.user && req.user?.id) {
+          if (typeof req.user.id === 'string' || typeof req.user.id === 'number') {
+            data.user = req.user.id
+          }
         }
         return data
-      }
-    ]
-  }
-} 
+      },
+    ],
+  },
+}

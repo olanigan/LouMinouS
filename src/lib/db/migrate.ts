@@ -1,6 +1,6 @@
-import { drizzle } from 'drizzle-orm/neon-serverless'
-import { migrate } from 'drizzle-orm/neon-serverless/migrator'
-import { Pool } from '@neondatabase/serverless'
+import { drizzle } from 'drizzle-orm/neon-http'
+import { migrate } from 'drizzle-orm/neon-http/migrator'
+import { neon } from '@neondatabase/serverless'
 import * as dotenv from 'dotenv'
 
 dotenv.config()
@@ -10,8 +10,8 @@ const runMigrate = async () => {
     throw new Error('DATABASE_URL is not defined')
   }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-  const db = drizzle(pool)
+  const sql = neon(process.env.DATABASE_URL)
+  const db = drizzle(sql)
 
   console.log('⏳ Running migrations...')
   
