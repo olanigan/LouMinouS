@@ -1,30 +1,41 @@
 import { buildConfig } from 'payload'
 import { postgresAdapter } from '@payloadcms/db-postgres'
-import { slateEditor } from '@payloadcms/richtext-slate'
+import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { Users } from './collections/Users'
 import { Media } from './collections/Media'
 import { Tenants } from './collections/Tenants'
 import { StudentSettings } from './collections/StudentSettings'
-import nodemailer from 'nodemailer'
-import { resendAdapter } from '@payloadcms/email-resend'
-
+import sharp from 'sharp'
 
 export default buildConfig({
-  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || '',
+  serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
   secret: process.env.PAYLOAD_SECRET || 'YOUR-SECRET-KEY',
   admin: {
     user: Users.slug,
     meta: {
       titleSuffix: '- LMS Admin',
     },
+    components: {
+      beforeDashboard: [],
+      afterDashboard: [],
+      beforeLogin: [],
+      afterLogin: [],
+    },
+    dateFormat: 'MMMM do yyyy, h:mm a',
   },
-  editor: slateEditor({}),
+  editor: lexicalEditor({}),
+  collections: [
+    Users,
+    Media,
+    Tenants,
+    StudentSettings,
+  ],
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || '',
-    },
+      connectionString: process.env.DATABASE_URL,
+      max: 10,
+    }
   }),
-  collections: [Users, Media, Tenants, StudentSettings],
   typescript: {
     outputFile: 'src/payload-types.ts',
   },
@@ -34,11 +45,9 @@ export default buildConfig({
   upload: {
     limits: {
       fileSize: 5000000, // 5MB
-    },
+    }
   },
-  email: resendAdapter({
-    defaultFromAddress: process.env.EMAIL_FROM || 'noreply@lms.com',
-    defaultFromName: 'LMS Platform',
-    apiKey: process.env.RESEND_API_KEY || '',
-  }),
+  csrf: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
+  cors: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
+  sharp,
 })

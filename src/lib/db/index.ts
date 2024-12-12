@@ -1,23 +1,14 @@
-import { Pool } from '@neondatabase/serverless'
-import { drizzle } from 'drizzle-orm/neon-serverless'
+import { drizzle } from 'drizzle-orm/neon-http'
+import { neon } from '@neondatabase/serverless'
+import * as schema from './schema'
 
-// Configure connection pool
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30,
-  connectionTimeoutMillis: 10_000,
-})
+const sql = neon(process.env.DATABASE_URL!)
+export const db = drizzle(sql, { schema })
 
-// Create Drizzle instance
-export const db = drizzle(pool)
-
-// Healthcheck function
 export async function checkDatabaseConnection() {
   try {
-    const client = await pool.connect()
-    await client.query('SELECT 1')
-    client.release()
+    const result = await sql`SELECT 1`
+    console.log('Database connection successful')
     return true
   } catch (error) {
     console.error('Database connection error:', error)

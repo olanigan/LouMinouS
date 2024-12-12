@@ -1,5 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, PayloadRequest } from 'payload'
 import type { User } from '../payload-types'
+
+type EmailTemplateArgs = {
+  req?: PayloadRequest
+  token?: string
+  user?: User
+}
 
 type UserAccessArgs = {
   req: {
@@ -7,28 +13,56 @@ type UserAccessArgs = {
   }
 }
 
+interface BeforeValidateHookData {
+  data?: {
+    email?: string
+    tenant?: string
+    id?: string | number
+    [key: string]: any
+  }
+  req: PayloadRequest
+  operation: 'create' | 'update'
+}
+
 export const Users: CollectionConfig = {
   slug: 'users',
   auth: {
     tokenExpiration: 7200, // 2 hours
-    verify: true,
+    verify: false, // Disable email verification
     maxLoginAttempts: 5,
-    lockTime: 600 * 1000, // 10 minutes
+    lockTime: 600000, // 10 minutes (in milliseconds)
     useAPIKey: true,
     depth: 2,
+    cookies: {
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      domain: process.env.COOKIE_DOMAIN,
+    },
+    forgotPassword: {
+      generateEmailHTML: ({ token }: EmailTemplateArgs = { token: '' }) => {
+        return `Reset your password using this token: ${token}`
+      },
+    },
   },
   admin: {
     useAsTitle: 'email',
     group: 'System',
     defaultColumns: ['email', 'role', 'tenant'],
+    description: 'Users of the platform',
+    listSearchableFields: ['email', 'name'],
+    
+    pagination: {
+      defaultLimit: 10,
+      limits: [10, 20, 50, 100],
+    },
   },
   access: {
     read: ({ req: { user } }: UserAccessArgs) => {
       if (user?.role === 'admin') return true
       return {
         tenant: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
     create: ({ req: { user } }: UserAccessArgs) => user?.role === 'admin',
@@ -36,12 +70,13 @@ export const Users: CollectionConfig = {
       if (user?.role === 'admin') return true
       return {
         id: {
-          equals: user?.id
-        }
+          equals: user?.id,
+        },
       }
     },
     delete: ({ req: { user } }: UserAccessArgs) => user?.role === 'admin',
   },
+
   fields: [
     {
       name: 'role',
@@ -102,6 +137,6 @@ export const Users: CollectionConfig = {
         }
         return data
       },
-    ]
+    ],
   },
 }

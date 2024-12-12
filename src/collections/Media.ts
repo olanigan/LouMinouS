@@ -19,14 +19,17 @@ export const Media: CollectionConfig = {
   admin: {
     useAsTitle: 'filename',
     group: 'Content',
+    defaultColumns: ['filename', 'mimeType', 'tenant'],
+    description: 'Media files and images',
+    listSearchableFields: ['filename', 'alt'],
   },
   access: {
     read: ({ req: { user } }: MediaAccessArgs) => {
       if (user?.role === 'admin') return true
       return {
         tenant: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
     create: ({ req: { user } }: MediaAccessArgs) => !!user,
@@ -34,16 +37,16 @@ export const Media: CollectionConfig = {
       if (user?.role === 'admin') return true
       return {
         tenant: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
     delete: ({ req: { user } }: MediaAccessArgs) => {
       if (user?.role === 'admin') return true
       return {
         tenant: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
   },
@@ -73,6 +76,7 @@ export const Media: CollectionConfig = {
       relationTo: 'tenants',
       required: true,
       admin: {
+        description: 'The tenant this media belongs to',
         condition: (data: MediaData): boolean => Boolean(!data.isGlobal),
       },
     },
@@ -89,6 +93,7 @@ export const Media: CollectionConfig = {
       name: 'alt',
       type: 'text',
       admin: {
+        description: 'Alternative text for the image',
         condition: (data: MediaData): boolean => Boolean(data.mimeType?.includes('image')),
       },
     },
@@ -100,7 +105,7 @@ export const Media: CollectionConfig = {
           data.tenant = req.user.tenant
         }
         return data
-      }
-    ]
-  }
+      },
+    ],
+  },
 }
