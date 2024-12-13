@@ -15,6 +15,10 @@ export interface Config {
     media: Media;
     tenants: Tenant;
     'student-settings': StudentSetting;
+    courses: Course;
+    modules: Module;
+    lessons: Lesson;
+    progress: Progress;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -25,6 +29,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     tenants: TenantsSelect<false> | TenantsSelect<true>;
     'student-settings': StudentSettingsSelect<false> | StudentSettingsSelect<true>;
+    courses: CoursesSelect<false> | CoursesSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
+    lessons: LessonsSelect<false> | LessonsSelect<true>;
+    progress: ProgressSelect<false> | ProgressSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -160,6 +168,363 @@ export interface StudentSetting {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses".
+ */
+export interface Course {
+  id: number;
+  title: string;
+  slug: string;
+  tenant?: (number | null) | Tenant;
+  isGlobal?: boolean | null;
+  instructor: number | User;
+  description: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  thumbnail: number | Media;
+  modules?: (number | Module)[] | null;
+  prerequisites?: (number | Course)[] | null;
+  duration: {
+    hours: number;
+    minutes: number;
+  };
+  schedule: {
+    startDate: string;
+    endDate: string;
+    enrollmentDeadline?: string | null;
+  };
+  status: 'draft' | 'published' | 'archived';
+  settings?: {
+    allowLateSubmissions?: boolean | null;
+    requirePrerequisites?: boolean | null;
+    showProgress?: boolean | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  title: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  course: number | Course;
+  order: number;
+  lessons?: (number | Lesson)[] | null;
+  duration: {
+    hours: number;
+    minutes: number;
+  };
+  status: 'draft' | 'published' | 'archived';
+  completionCriteria: {
+    type: 'all_lessons' | 'min_score' | 'custom';
+    minimumScore?: number | null;
+    customRule?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons".
+ */
+export interface Lesson {
+  id: number;
+  title: string;
+  module: number | Module;
+  order: number;
+  type: 'video' | 'reading' | 'quiz' | 'assignment' | 'discussion';
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  video?: {
+    url: string;
+    duration: number;
+    transcript?: string | null;
+  };
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: string;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  quiz?: {
+    questions: {
+      question: string;
+      type: 'multiple' | 'boolean' | 'text';
+      options?:
+        | {
+            text: string;
+            correct: boolean;
+            id?: string | null;
+          }[]
+        | null;
+      answer?: string | null;
+      points: number;
+      explanation?: {
+        root: {
+          type: string;
+          children: {
+            type: string;
+            version: number;
+            [k: string]: unknown;
+          }[];
+          direction: ('ltr' | 'rtl') | null;
+          format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+          indent: number;
+          version: number;
+        };
+        [k: string]: unknown;
+      } | null;
+      id?: string | null;
+    }[];
+    settings: {
+      timeLimit?: number | null;
+      attempts?: number | null;
+      passingScore: number;
+      randomizeQuestions?: boolean | null;
+      showCorrectAnswers?: ('never' | 'after_each' | 'after_submit' | 'after_all') | null;
+    };
+  };
+  assignment?: {
+    instructions: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    dueDate: string;
+    points: number;
+    rubric?:
+      | {
+          criterion: string;
+          points: number;
+          description?: string | null;
+          id?: string | null;
+        }[]
+      | null;
+    allowedFileTypes?: ('pdf' | 'doc' | 'image' | 'zip' | 'code')[] | null;
+  };
+  discussion?: {
+    prompt: {
+      root: {
+        type: string;
+        children: {
+          type: string;
+          version: number;
+          [k: string]: unknown;
+        }[];
+        direction: ('ltr' | 'rtl') | null;
+        format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+        indent: number;
+        version: number;
+      };
+      [k: string]: unknown;
+    };
+    guidelines?:
+      | {
+          text: string;
+          id?: string | null;
+        }[]
+      | null;
+    settings?: {
+      requireResponse?: boolean | null;
+      requireReplies?: number | null;
+      minimumWords?: number | null;
+      dueDate?: string | null;
+    };
+  };
+  status: 'draft' | 'published' | 'archived';
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "progress".
+ */
+export interface Progress {
+  id: number;
+  student: number | User;
+  course: number | Course;
+  completedLessons?:
+    | {
+        relationTo: 'lessons';
+        value: number | Lesson;
+      }[]
+    | null;
+  quizAttempts?:
+    | {
+        lesson: {
+          relationTo: 'lessons';
+          value: number | Lesson;
+        };
+        score: number;
+        answers:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        completedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  assignments?:
+    | {
+        lesson: {
+          relationTo: 'lessons';
+          value: number | Lesson;
+        };
+        submission:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        grade?: number | null;
+        feedback?: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        } | null;
+        submittedAt: string;
+        gradedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  discussions?:
+    | {
+        lesson: {
+          relationTo: 'lessons';
+          value: number | Lesson;
+        };
+        post: {
+          root: {
+            type: string;
+            children: {
+              type: string;
+              version: number;
+              [k: string]: unknown;
+            }[];
+            direction: ('ltr' | 'rtl') | null;
+            format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+            indent: number;
+            version: number;
+          };
+          [k: string]: unknown;
+        };
+        replies?:
+          | {
+              author: number | User;
+              content: {
+                root: {
+                  type: string;
+                  children: {
+                    type: string;
+                    version: number;
+                    [k: string]: unknown;
+                  }[];
+                  direction: ('ltr' | 'rtl') | null;
+                  format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+                  indent: number;
+                  version: number;
+                };
+                [k: string]: unknown;
+              };
+              postedAt: string;
+              id?: string | null;
+            }[]
+          | null;
+        postedAt: string;
+        id?: string | null;
+      }[]
+    | null;
+  overallProgress: number;
+  status: 'not_started' | 'in_progress' | 'completed';
+  startedAt: string;
+  lastAccessed: string;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -180,6 +545,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'student-settings';
         value: number | StudentSetting;
+      } | null)
+    | ({
+        relationTo: 'courses';
+        value: number | Course;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'lessons';
+        value: number | Lesson;
+      } | null)
+    | ({
+        relationTo: 'progress';
+        value: number | Progress;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -324,6 +705,213 @@ export interface StudentSettingsSelect<T extends boolean = true> {
               achievements?: T;
             };
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "courses_select".
+ */
+export interface CoursesSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  tenant?: T;
+  isGlobal?: T;
+  instructor?: T;
+  description?: T;
+  thumbnail?: T;
+  modules?: T;
+  prerequisites?: T;
+  duration?:
+    | T
+    | {
+        hours?: T;
+        minutes?: T;
+      };
+  schedule?:
+    | T
+    | {
+        startDate?: T;
+        endDate?: T;
+        enrollmentDeadline?: T;
+      };
+  status?: T;
+  settings?:
+    | T
+    | {
+        allowLateSubmissions?: T;
+        requirePrerequisites?: T;
+        showProgress?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  course?: T;
+  order?: T;
+  lessons?: T;
+  duration?:
+    | T
+    | {
+        hours?: T;
+        minutes?: T;
+      };
+  status?: T;
+  completionCriteria?:
+    | T
+    | {
+        type?: T;
+        minimumScore?: T;
+        customRule?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "lessons_select".
+ */
+export interface LessonsSelect<T extends boolean = true> {
+  title?: T;
+  module?: T;
+  order?: T;
+  type?: T;
+  description?: T;
+  video?:
+    | T
+    | {
+        url?: T;
+        duration?: T;
+        transcript?: T;
+      };
+  content?: T;
+  quiz?:
+    | T
+    | {
+        questions?:
+          | T
+          | {
+              question?: T;
+              type?: T;
+              options?:
+                | T
+                | {
+                    text?: T;
+                    correct?: T;
+                    id?: T;
+                  };
+              answer?: T;
+              points?: T;
+              explanation?: T;
+              id?: T;
+            };
+        settings?:
+          | T
+          | {
+              timeLimit?: T;
+              attempts?: T;
+              passingScore?: T;
+              randomizeQuestions?: T;
+              showCorrectAnswers?: T;
+            };
+      };
+  assignment?:
+    | T
+    | {
+        instructions?: T;
+        dueDate?: T;
+        points?: T;
+        rubric?:
+          | T
+          | {
+              criterion?: T;
+              points?: T;
+              description?: T;
+              id?: T;
+            };
+        allowedFileTypes?: T;
+      };
+  discussion?:
+    | T
+    | {
+        prompt?: T;
+        guidelines?:
+          | T
+          | {
+              text?: T;
+              id?: T;
+            };
+        settings?:
+          | T
+          | {
+              requireResponse?: T;
+              requireReplies?: T;
+              minimumWords?: T;
+              dueDate?: T;
+            };
+      };
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "progress_select".
+ */
+export interface ProgressSelect<T extends boolean = true> {
+  student?: T;
+  course?: T;
+  completedLessons?: T;
+  quizAttempts?:
+    | T
+    | {
+        lesson?: T;
+        score?: T;
+        answers?: T;
+        completedAt?: T;
+        id?: T;
+      };
+  assignments?:
+    | T
+    | {
+        lesson?: T;
+        submission?: T;
+        grade?: T;
+        feedback?: T;
+        submittedAt?: T;
+        gradedAt?: T;
+        id?: T;
+      };
+  discussions?:
+    | T
+    | {
+        lesson?: T;
+        post?: T;
+        replies?:
+          | T
+          | {
+              author?: T;
+              content?: T;
+              postedAt?: T;
+              id?: T;
+            };
+        postedAt?: T;
+        id?: T;
+      };
+  overallProgress?: T;
+  status?: T;
+  startedAt?: T;
+  lastAccessed?: T;
+  completedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
