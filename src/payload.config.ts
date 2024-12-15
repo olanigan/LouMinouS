@@ -10,6 +10,7 @@ import { Lessons } from './collections/Lessons'
 import { editorConfig } from './lib/payload/editor'
 import sharp from 'sharp'
 import { Progress } from './collections/Progress'
+import { Enrollments } from './collections/Enrollments'
 
 export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
@@ -37,6 +38,7 @@ export default buildConfig({
     Modules,
     Lessons,
     Progress,
+    Enrollments,
   ],
   db: postgresAdapter({
     pool: {

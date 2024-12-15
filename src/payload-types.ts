@@ -19,6 +19,7 @@ export interface Config {
     modules: Module;
     lessons: Lesson;
     progress: Progress;
+    enrollments: Enrollment;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -33,6 +34,7 @@ export interface Config {
     modules: ModulesSelect<false> | ModulesSelect<true>;
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     progress: ProgressSelect<false> | ProgressSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -209,6 +211,13 @@ export interface Course {
     allowLateSubmissions?: boolean | null;
     requirePrerequisites?: boolean | null;
     showProgress?: boolean | null;
+  };
+  enrollment?: {
+    capacity?: number | null;
+    allowSelfEnrollment?: boolean | null;
+    requirePrerequisiteCompletion?: boolean | null;
+    enrollmentStart?: string | null;
+    enrollmentEnd?: string | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -525,6 +534,23 @@ export interface Progress {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: number;
+  student: number | User;
+  course: number | Course;
+  status: 'active' | 'completed' | 'dropped' | 'pending';
+  enrolledAt: string;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  droppedAt?: string | null;
+  expiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-locked-documents".
  */
 export interface PayloadLockedDocument {
@@ -561,6 +587,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'progress';
         value: number | Progress;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: number | Enrollment;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -743,6 +773,15 @@ export interface CoursesSelect<T extends boolean = true> {
         requirePrerequisites?: T;
         showProgress?: T;
       };
+  enrollment?:
+    | T
+    | {
+        capacity?: T;
+        allowSelfEnrollment?: T;
+        requirePrerequisiteCompletion?: T;
+        enrollmentStart?: T;
+        enrollmentEnd?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
@@ -912,6 +951,22 @@ export interface ProgressSelect<T extends boolean = true> {
   startedAt?: T;
   lastAccessed?: T;
   completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  student?: T;
+  course?: T;
+  status?: T;
+  enrolledAt?: T;
+  startedAt?: T;
+  completedAt?: T;
+  droppedAt?: T;
+  expiresAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }

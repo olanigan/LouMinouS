@@ -7,6 +7,10 @@ type AccessArgs = {
   }
 }
 
+// Add this type to handle the enrollments collection
+type EnrollmentsSlug = 'enrollments'
+type AllCollectionSlugs = CollectionSlug | EnrollmentsSlug
+
 export const Courses: CollectionConfig = {
   slug: 'courses',
   admin: {
@@ -127,10 +131,13 @@ export const Courses: CollectionConfig = {
       type: 'relationship',
       relationTo: 'courses' as CollectionSlug,
       hasMany: true,
-      filterOptions: {
-        tenant: {
-          equals: '{{user.tenant}}',
-        },
+      filterOptions: ({ user }) => {
+        if (!user?.tenant) return false
+        return {
+          tenant: {
+            equals: user.tenant,
+          },
+        }
       },
     },
     {
@@ -219,10 +226,60 @@ export const Courses: CollectionConfig = {
         },
       ],
     },
+    {
+      name: 'enrollment',
+      type: 'group',
+      fields: [
+        {
+          name: 'capacity',
+          type: 'number',
+          min: 0,
+          admin: {
+            description: 'Maximum number of students (0 for unlimited)',
+          },
+        },
+        {
+          name: 'allowSelfEnrollment',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            description: 'Allow students to enroll themselves',
+          },
+        },
+        {
+          name: 'requirePrerequisiteCompletion',
+          type: 'checkbox',
+          defaultValue: true,
+          admin: {
+            description: 'Enforce prerequisite course completion',
+          },
+        },
+        {
+          name: 'enrollmentStart',
+          type: 'date',
+          admin: {
+            description: 'When enrollment opens',
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
+          },
+        },
+        {
+          name: 'enrollmentEnd',
+          type: 'date',
+          admin: {
+            description: 'When enrollment closes',
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     beforeChange: [
-      ({ data, req, operation }) => {
+      async ({ data, req, operation }) => {
         // Generate slug from title if not provided
         if (operation === 'create' && data.title && !data.slug) {
           data.slug = data.title
@@ -239,6 +296,27 @@ export const Courses: CollectionConfig = {
         // Set instructor to current user if not provided and user is instructor
         if (operation === 'create' && !data.instructor && req.user?.role === 'instructor') {
           data.instructor = req.user.id
+        }
+
+        // Validate enrollment capacity
+        if (operation === 'create' || operation === 'update') {
+          if (data.enrollment?.capacity > 0) {
+            const currentEnrollments = await req.payload.find({
+              collection: 'enrollments' as AllCollectionSlugs,
+              where: {
+                course: {
+                  equals: data.id,
+                },
+                status: {
+                  equals: 'active',
+                },
+              },
+            })
+            
+            if (currentEnrollments.totalDocs >= data.enrollment.capacity) {
+              throw new Error('Course has reached maximum enrollment capacity')
+            }
+          }
         }
 
         return data

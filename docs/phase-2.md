@@ -6,12 +6,14 @@ This phase implements the core learning content structure using:
 2. Lexical Rich Text Editor
 3. Media handling
 4. Progress tracking
+5. Enrollment system
 
 **Key Components:**
 - ✅ Course management
 - ✅ Content organization
 - ✅ Quiz system
 - ✅ Progress tracking
+- ✅ Enrollment system
 
 **Current Status:**
 A complete content structure with:
@@ -19,6 +21,7 @@ A complete content structure with:
 - ✅ Content creation tools
 - ✅ Assessment system
 - ✅ Progress monitoring
+- ✅ Student enrollment
 
 ## 2.1 Course Management (✅ Completed)
 
@@ -29,6 +32,7 @@ A complete content structure with:
   - Module organization
   - Prerequisites handling
   - Schedule management
+  - Enrollment settings
   
 - ✅ Modules
   - Course relationship
@@ -46,22 +50,20 @@ A complete content structure with:
   - Rich text content
   - Media embedding
 
-## 2.2 Rich Text Editor (✅ Completed)
+## 2.2 Enrollment System (✅ Completed)
 
-### Lexical Editor Configuration
-Implemented with:
-- Custom blocks support
-- Code highlighting
-- Media embedding
-- Callout blocks
-- "/" command menu
-- Drag and drop support
+### Features Implemented
+- ✅ Student enrollment tracking
+- ✅ Course capacity management
+- ✅ Self-enrollment options
+- ✅ Enrollment status tracking
+- ✅ Prerequisites verification
+- ✅ Progress record creation
 
-### Custom Elements
-- ✅ Callout blocks (info, warning, success, error)
-- ✅ Code blocks with language selection
-- ✅ Media blocks with alignment options
-- ✅ Custom formatting options
+### Access Control
+- 👤 Students: Self-enroll in available courses
+- 👨‍🏫 Instructors: Manage enrollments for their courses
+- 👑 Admins: Full enrollment management
 
 ## 2.3 Progress Tracking (✅ Completed)
 
@@ -97,6 +99,7 @@ New tables added:
 - courses
 - modules
 - lessons
+- enrollments
 - progress
 - quiz_attempts
 - assignments
@@ -132,29 +135,6 @@ Implemented role-based access for:
    - Assignment deadlines
    - Quiz reminders
    - Discussion notifications
-
-## Current Project Structure
-```
-src/
-├── collections/
-│   ├── Courses.ts
-│   ├── Modules.ts
-│   ├── Lessons.ts
-│   ├── Progress.ts
-│   └── index.ts
-├── lib/
-│   ├── db/
-│   │   ├── schema/
-│   │   │   ├── courses.ts
-│   │   │   ├── modules.ts
-│   │   │   ├── lessons.ts
-│   │   │   └── progress.ts
-│   │   └── index.ts
-│   └── payload/
-│       └── editor.ts
-└── access/
-    └── roles.ts
-```
 
 ## Known Issues
 - 🐛 Need to optimize rich text editor for large content
