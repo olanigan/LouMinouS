@@ -46,6 +46,7 @@ export const progress = pgTable('progress', {
   
   // Progress metrics
   overallProgress: integer('overall_progress').notNull().default(0), // Percentage
+  pointsEarned: integer('points_earned').notNull().default(0),
   status: text('status', { 
     enum: ['not_started', 'in_progress', 'completed'] 
   }).notNull().default('not_started'),

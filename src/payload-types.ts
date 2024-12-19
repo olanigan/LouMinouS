@@ -20,6 +20,12 @@ export interface Config {
     lessons: Lesson;
     progress: Progress;
     enrollments: Enrollment;
+    levels: Level;
+    points: Point;
+    badges: Badge;
+    achievements: Achievement;
+    leaderboards: Leaderboard;
+    streaks: Streak;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
@@ -35,6 +41,12 @@ export interface Config {
     lessons: LessonsSelect<false> | LessonsSelect<true>;
     progress: ProgressSelect<false> | ProgressSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
+    levels: LevelsSelect<false> | LevelsSelect<true>;
+    points: PointsSelect<false> | PointsSelect<true>;
+    badges: BadgesSelect<false> | BadgesSelect<true>;
+    achievements: AchievementsSelect<false> | AchievementsSelect<true>;
+    leaderboards: LeaderboardsSelect<false> | LeaderboardsSelect<true>;
+    streaks: StreaksSelect<false> | StreaksSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -525,6 +537,7 @@ export interface Progress {
       }[]
     | null;
   overallProgress: number;
+  pointsEarned: number;
   status: 'not_started' | 'in_progress' | 'completed';
   startedAt: string;
   lastAccessed: string;
@@ -546,6 +559,168 @@ export interface Enrollment {
   completedAt?: string | null;
   droppedAt?: string | null;
   expiresAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "levels".
+ */
+export interface Level {
+  id: number;
+  name: string;
+  level: number;
+  description?: string | null;
+  pointsRequired: number;
+  tenant?: (number | null) | Tenant;
+  isGlobal?: boolean | null;
+  icon: number | Media;
+  rewards?:
+    | {
+        type: 'badge' | 'feature' | 'custom';
+        badge?: (number | null) | Badge;
+        feature?: string | null;
+        customData?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges".
+ */
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon: number | Media;
+  rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+  category: 'progress' | 'performance' | 'engagement' | 'special';
+  tenant?: (number | null) | Tenant;
+  isGlobal?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "points".
+ */
+export interface Point {
+  id: number;
+  student: number | User;
+  type:
+    | 'lesson_complete'
+    | 'quiz_score'
+    | 'assignment_submit'
+    | 'discussion_post'
+    | 'streak_bonus'
+    | 'achievement_unlock';
+  amount: number;
+  source: {
+    type: 'lessons' | 'achievements' | 'streaks';
+    lesson?: (number | null) | Lesson;
+    achievement?: (number | null) | Achievement;
+    streak?: (number | null) | Streak;
+  };
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "achievements".
+ */
+export interface Achievement {
+  id: number;
+  name: string;
+  description: string;
+  type: 'course_progress' | 'quiz_score' | 'assignment' | 'streak' | 'discussion' | 'custom';
+  criteria: {
+    metric: 'count' | 'score' | 'duration' | 'custom';
+    threshold: number;
+    timeframe?: ('all_time' | 'daily' | 'weekly' | 'monthly') | null;
+    customRule?: string | null;
+  };
+  badge: number | Badge;
+  points: number;
+  secret?: boolean | null;
+  tenant?: (number | null) | Tenant;
+  isGlobal?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "streaks".
+ */
+export interface Streak {
+  id: number;
+  student: number | User;
+  type: 'login' | 'progress' | 'quiz' | 'assignment';
+  currentStreak: number;
+  longestStreak: number;
+  lastActivity: string;
+  nextRequired: string;
+  history?:
+    | {
+        date: string;
+        activity:
+          | {
+              relationTo: 'courses';
+              value: number | Course;
+            }
+          | {
+              relationTo: 'lessons';
+              value: number | Lesson;
+            }
+          | {
+              relationTo: 'modules';
+              value: number | Module;
+            };
+        points: number;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leaderboards".
+ */
+export interface Leaderboard {
+  id: number;
+  name: string;
+  tenant?: (number | null) | Tenant;
+  isGlobal?: boolean | null;
+  type: 'points' | 'progress' | 'achievements' | 'custom';
+  timeframe: 'all_time' | 'daily' | 'weekly' | 'monthly';
+  scope?: {
+    course?: (number | null) | Course;
+    pointType?: ('all' | 'lesson' | 'quiz' | 'assignment') | null;
+    achievementType?: ('all' | 'course' | 'quiz' | 'streak') | null;
+  };
+  customLogic?: string | null;
+  displayLimit: number;
+  refreshInterval: number;
   updatedAt: string;
   createdAt: string;
 }
@@ -591,6 +766,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'enrollments';
         value: number | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'levels';
+        value: number | Level;
+      } | null)
+    | ({
+        relationTo: 'points';
+        value: number | Point;
+      } | null)
+    | ({
+        relationTo: 'badges';
+        value: number | Badge;
+      } | null)
+    | ({
+        relationTo: 'achievements';
+        value: number | Achievement;
+      } | null)
+    | ({
+        relationTo: 'leaderboards';
+        value: number | Leaderboard;
+      } | null)
+    | ({
+        relationTo: 'streaks';
+        value: number | Streak;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -947,6 +1146,7 @@ export interface ProgressSelect<T extends boolean = true> {
         id?: T;
       };
   overallProgress?: T;
+  pointsEarned?: T;
   status?: T;
   startedAt?: T;
   lastAccessed?: T;
@@ -967,6 +1167,134 @@ export interface EnrollmentsSelect<T extends boolean = true> {
   completedAt?: T;
   droppedAt?: T;
   expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "levels_select".
+ */
+export interface LevelsSelect<T extends boolean = true> {
+  name?: T;
+  level?: T;
+  description?: T;
+  pointsRequired?: T;
+  tenant?: T;
+  isGlobal?: T;
+  icon?: T;
+  rewards?:
+    | T
+    | {
+        type?: T;
+        badge?: T;
+        feature?: T;
+        customData?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "points_select".
+ */
+export interface PointsSelect<T extends boolean = true> {
+  student?: T;
+  type?: T;
+  amount?: T;
+  source?:
+    | T
+    | {
+        type?: T;
+        lesson?: T;
+        achievement?: T;
+        streak?: T;
+      };
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges_select".
+ */
+export interface BadgesSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  icon?: T;
+  rarity?: T;
+  category?: T;
+  tenant?: T;
+  isGlobal?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "achievements_select".
+ */
+export interface AchievementsSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  type?: T;
+  criteria?:
+    | T
+    | {
+        metric?: T;
+        threshold?: T;
+        timeframe?: T;
+        customRule?: T;
+      };
+  badge?: T;
+  points?: T;
+  secret?: T;
+  tenant?: T;
+  isGlobal?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leaderboards_select".
+ */
+export interface LeaderboardsSelect<T extends boolean = true> {
+  name?: T;
+  tenant?: T;
+  isGlobal?: T;
+  type?: T;
+  timeframe?: T;
+  scope?:
+    | T
+    | {
+        course?: T;
+        pointType?: T;
+        achievementType?: T;
+      };
+  customLogic?: T;
+  displayLimit?: T;
+  refreshInterval?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "streaks_select".
+ */
+export interface StreaksSelect<T extends boolean = true> {
+  student?: T;
+  type?: T;
+  currentStreak?: T;
+  longestStreak?: T;
+  lastActivity?: T;
+  nextRequired?: T;
+  history?:
+    | T
+    | {
+        date?: T;
+        activity?: T;
+        points?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

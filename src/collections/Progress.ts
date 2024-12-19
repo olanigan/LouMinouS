@@ -217,6 +217,16 @@ export const Progress: CollectionConfig = {
       },
     },
     {
+      name: 'pointsEarned',
+      type: 'number',
+      required: true,
+      min: 0,
+      defaultValue: 0,
+      admin: {
+        description: 'Total points earned in this course',
+      },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,

@@ -11,6 +11,12 @@ import { editorConfig } from './lib/payload/editor'
 import sharp from 'sharp'
 import { Progress } from './collections/Progress'
 import { Enrollments } from './collections/Enrollments'
+import { Levels } from './collections/Levels'
+import { Points } from './collections/Points'
+import { Badges } from './collections/Badges'
+import { Achievements } from './collections/Achievements'
+import { Leaderboards } from './collections/Leaderboards'
+import { Streaks } from './collections/Streaks'
 
 export default buildConfig({
   serverURL: process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000',
@@ -39,6 +45,12 @@ export default buildConfig({
     Lessons,
     Progress,
     Enrollments,
+    Levels,
+    Points,
+    Badges,
+    Achievements,
+    Leaderboards,
+    Streaks
   ],
   db: postgresAdapter({
     pool: {
