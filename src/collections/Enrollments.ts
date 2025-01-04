@@ -163,7 +163,7 @@ export const Enrollments: CollectionConfig = {
         if (operation === 'create') {
           data.enrolledAt = new Date().toISOString()
         }
-        
+
         // Handle status changes
         if (operation === 'update' && data.status) {
           const now = new Date().toISOString()
@@ -196,10 +196,13 @@ export const Enrollments: CollectionConfig = {
               lastAccessed: new Date().toISOString(),
               status: 'not_started',
               overallProgress: 0,
+              pointsEarned: 0,
+              totalPoints: 0,
+              isGlobal: false,
             },
           })
         }
       },
     ],
   },
-} 
+}

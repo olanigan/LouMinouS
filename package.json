@@ -1,77 +1,45 @@
 {
   "name": "louminous",
   "version": "1.0.0",
-  "description": "A blank template to get started with Payload 3.0",
+  "description": "A blank template to get started with Payload",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
-    "devsafe": "rm -rf .next && cross-env NODE_OPTIONS=--no-deprecation next dev",
     "generate:importmap": "cross-env NODE_OPTIONS=--no-deprecation payload generate:importmap",
-    "generate:types": "cross-env NODE_OPTIONS=--no-deprecation payload generate:types",
-    "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
+    "generate:schema": "payload-graphql generate:schema",
+    "generate:types": "payload generate:types",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
-    "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/lib/db/migrate.ts",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "seed": "npm run payload migrate:fresh",
+    "start": "cross-env NODE_OPTIONS=--no-deprecation next start"
   },
   "dependencies": {
-    "@formkit/auto-animate": "^0.8.2",
-    "@hookform/resolvers": "^3.9.1",
-    "@legendapp/motion": "^2.4.0",
-    "@neondatabase/serverless": "^0.10.4",
-    "@payloadcms/db-postgres": "3.0.0",
-    "@payloadcms/email-resend": "3.0.0",
-    "@payloadcms/next": "3.0.0",
-    "@payloadcms/richtext-lexical": "3.0.0",
-    "@payloadcms/richtext-slate": "3.0.0",
-    "@payloadcms/ui": "3.0.0",
-    "@types/nodemailer": "^6.4.17",
+    "@payloadcms/db-postgres": "latest",
+    "@payloadcms/next": "latest",
+    "@payloadcms/richtext-lexical": "latest",
+    "@payloadcms/ui": "latest",
     "cross-env": "^7.0.3",
-    "date-fns": "^4.1.0",
-    "drizzle-orm": "^0.37.0",
-    "drizzle-zod": "^0.5.1",
-    "framer-motion": "^11.13.1",
-    "graphql": "^16.8.1",
-    "nanoid": "^5.0.9",
-    "next": "15.0.3",
-    "nodemailer": "^6.9.16",
-    "nuqs": "^2.2.3",
-    "payload": "3.0.0",
-    "pg": "^8.13.1",
-    "react": "19.0.0-rc-66855b96-20241106",
-    "react-dom": "19.0.0-rc-66855b96-20241106",
-    "react-hook-form": "^7.53.2",
-    "resend": "3.2.0",
-    "sharp": "^0.32.6",
-    "slugify": "^1.6.6",
-    "zod": "^3.23.8"
+    "dotenv": "^8.2.0",
+    "graphql": "^16.9.0",
+    "next": "^15.0.0",
+    "payload": "latest",
+    "qs-esm": "7.0.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "sharp": "0.32.6"
   },
   "devDependencies": {
-    "@types/node": "^22.5.4",
-    "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1",
-    "dotenv": "^16.4.7",
-    "drizzle-kit": "^0.30.0",
-    "eslint": "^8",
-    "eslint-config-next": "15.0.3",
-    "tsx": "^4.19.2",
-    "typescript": "5.7.2"
+    "@payloadcms/graphql": "latest",
+    "@swc/core": "^1.6.13",
+    "@types/react": "19.0.1",
+    "@types/react-dom": "19.0.1",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^15.0.0",
+    "tsx": "^4.16.2",
+    "typescript": "5.5.2"
   },
   "engines": {
     "node": "^18.20.2 || >=20.9.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@types/react": "npm:types-react@19.0.0-rc.1",
-      "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
-    }
-  },
-  "overrides": {
-    "@types/react": "npm:types-react@19.0.0-rc.1",
-    "@types/react-dom": "npm:types-react-dom@19.0.0-rc.1"
   }
 }
