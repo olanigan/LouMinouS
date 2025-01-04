@@ -1,12 +1,11 @@
-import { db } from '../db'
-import { achievements } from '../db/schema/achievements'
-import { userAchievements } from '../db/schema/userAchievements'
-import { eq } from 'drizzle-orm'
+'use server'
+
+import payload from 'payload'
 
 type CheckPrerequisitesParams = {
-  userId: string
-  achievementId: string
-  tenantId: string
+  userId: number
+  achievementId: number
+  tenantId: number
 }
 
 export async function checkPrerequisites({
@@ -14,28 +13,14 @@ export async function checkPrerequisites({
   achievementId,
   tenantId,
 }: CheckPrerequisitesParams): Promise<boolean> {
-  // Get achievement with prerequisites
-  const achievement = await db.query.achievements.findFirst({
-    where: eq(achievements.id, achievementId),
-    with: {
-      prerequisites: true,
+  // Get user's completed achievements
+  const { docs } = await payload.find({
+    collection: 'points',
+    where: {
+      and: [{ student: { equals: userId } }, { type: { equals: 'achievement_unlock' } }],
     },
   })
 
-  if (!achievement || !achievement.prerequisites?.length) {
-    // No prerequisites means automatically satisfied
-    return true
-  }
-
-  // Get user's completed achievements
-  const completed = await db.query.userAchievements.findMany({
-    where: eq(userAchievements.userId, userId),
-  })
-
-  const completedIds = completed.map(c => c.achievementId)
-
-  // Check if all prerequisites are completed
-  return achievement.prerequisites.every(prereq => 
-    completedIds.includes(prereq.id)
-  )
-} 
+  const unlockedAchievements = docs.map((doc) => doc.source?.achievement).filter(Boolean)
+  return unlockedAchievements.length > 0
+}

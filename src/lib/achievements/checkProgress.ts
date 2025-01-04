@@ -1,12 +1,11 @@
-import { db } from '../db'
-import { achievements } from '../db/schema/achievements'
-import { userProgress } from '../db/schema/userProgress'
-import { eq } from 'drizzle-orm'
+'use server'
+
+import payload from 'payload'
 
 type CheckProgressParams = {
-  userId: string
-  achievementId: string
-  tenantId: string
+  userId: number
+  achievementId: number
+  tenantId: number
 }
 
 export async function checkProgress({
@@ -15,8 +14,9 @@ export async function checkProgress({
   tenantId,
 }: CheckProgressParams): Promise<boolean> {
   // Get achievement criteria
-  const achievement = await db.query.achievements.findFirst({
-    where: eq(achievements.id, achievementId),
+  const achievement = await payload.findByID({
+    collection: 'achievements',
+    id: achievementId,
   })
 
   if (!achievement) {
@@ -24,26 +24,48 @@ export async function checkProgress({
   }
 
   // Get user's progress
-  const progress = await db.query.userProgress.findFirst({
-    where: eq(userProgress.userId, userId),
+  const {
+    docs: [userProgress],
+  } = await payload.find({
+    collection: 'progress',
+    where: {
+      student: { equals: userId },
+    },
+    limit: 1,
   })
 
-  if (!progress) {
+  if (!userProgress) {
     return false
   }
 
   // Check criteria based on type
   switch (achievement.type) {
     case 'course_progress':
-      return progress.overallProgress >= achievement.threshold
-    case 'quiz_score':
-      return progress.averageQuizScore >= achievement.threshold
-    case 'streak':
-      return progress.currentStreak >= achievement.threshold
+      return userProgress.overallProgress >= achievement.criteria.threshold
+    case 'quiz_score': {
+      const quizScores = userProgress.quizAttempts?.map((attempt) => attempt.score) || []
+      const averageScore =
+        quizScores.length > 0
+          ? quizScores.reduce((a: number, b: number) => a + b, 0) / quizScores.length
+          : 0
+      return averageScore >= achievement.criteria.threshold
+    }
+    case 'streak': {
+      const {
+        docs: [userStreak],
+      } = await payload.find({
+        collection: 'streaks',
+        where: {
+          student: { equals: userId },
+        },
+        limit: 1,
+      })
+      return (userStreak?.currentStreak || 0) >= achievement.criteria.threshold
+    }
     case 'custom':
       // Custom criteria would be handled here
       return false
     default:
       return false
   }
-} 
+}

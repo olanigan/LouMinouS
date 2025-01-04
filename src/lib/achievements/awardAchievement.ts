@@ -1,16 +1,14 @@
-import { db } from '../db'
-import { userAchievements } from '../db/schema/userAchievements'
-import { userBadges } from '../db/schema/userBadges'
-import { points } from '../db/schema/points'
-import { eq } from 'drizzle-orm'
+'use server'
+
+import payload from 'payload'
 import { createNotification } from '../notifications/createNotification'
 
 type AwardAchievementParams = {
-  achievementId: string
-  userId: string
-  tenantId: string
+  achievementId: number
+  userId: number
+  tenantId: number
   points: number
-  badgeId: string
+  badgeId: number
 }
 
 export async function awardAchievement({
@@ -20,41 +18,31 @@ export async function awardAchievement({
   points: pointsToAward,
   badgeId,
 }: AwardAchievementParams): Promise<void> {
-  // Start a transaction
-  await db.transaction(async (tx) => {
-    // Record achievement completion
-    await tx.insert(userAchievements).values({
-      achievementId,
-      userId,
-      completedAt: new Date(),
-    })
-
-    // Award badge
-    await tx.insert(userBadges).values({
-      badgeId,
-      userId,
-      awardedAt: new Date(),
-    })
-
-    // Award points
-    await tx.insert(points).values({
-      studentId: userId,
+  // Award points
+  await payload.create({
+    collection: 'points',
+    data: {
+      student: userId,
       type: 'achievement_unlock',
       amount: pointsToAward,
-      sourceType: 'achievements',
-      sourceId: achievementId,
-      createdAt: new Date(),
-    })
+      source: {
+        type: 'achievements',
+        achievement: achievementId,
+      },
+      metadata: {
+        badgeId,
+      },
+    },
   })
 
-  // Send notification (outside transaction as it's not critical)
+  // Send notification (non-blocking)
   await createNotification({
-    userId,
+    userId: userId.toString(),
     type: 'achievement_unlocked',
     data: {
-      achievementId,
-      badgeId,
+      achievementId: achievementId.toString(),
+      badgeId: badgeId.toString(),
       points: pointsToAward,
     },
-  }).catch(console.error) // Non-blocking notification
-} 
+  }).catch(console.error)
+}

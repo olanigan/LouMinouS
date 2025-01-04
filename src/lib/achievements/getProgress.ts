@@ -1,17 +1,24 @@
-import { db } from '../db'
-import { courseProgress } from '../db/schema/courseProgress'
-import { quizAttempts } from '../db/schema/quizAttempts'
-import { assignments } from '../db/schema/assignments'
-import { streaks } from '../db/schema/streaks'
-import { discussions } from '../db/schema/discussions'
-import { eq, and, gte } from 'drizzle-orm'
-import { sql } from 'drizzle-orm'
+import payload from 'payload'
+import type { Progress, Streak } from '../../payload-types'
 
 type GetProgressParams = {
   userId: string
   achievementType: string
   metric: 'count' | 'score' | 'duration' | 'custom'
   timeframe?: 'all_time' | 'daily' | 'weekly' | 'monthly'
+}
+
+type QuizAttempt = {
+  lesson?: number | { id: number } | null
+  score: number
+  completedAt: string
+  id?: string | null
+}
+
+type Discussion = {
+  lesson?: number | { id: number } | null
+  participatedAt: string
+  id?: string | null
 }
 
 export async function getProgress({
@@ -60,34 +67,25 @@ function getTimeframeFilter(timeframe: string): Date {
 async function getCourseProgress(
   userId: string,
   metric: string,
-  timeframeFilter: Date
+  timeframeFilter: Date,
 ): Promise<number> {
+  const { docs, totalDocs } = await payload.find({
+    collection: 'progress',
+    where: {
+      and: [
+        { student: { equals: userId } },
+        { completedAt: { greater_than: timeframeFilter.toISOString() } },
+      ],
+    },
+  })
+
   switch (metric) {
     case 'count':
-      const result = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(courseProgress)
-        .where(
-          and(
-            eq(courseProgress.userId, userId),
-            gte(courseProgress.completedAt, timeframeFilter)
-          )
-        )
-      return result[0]?.count || 0
+      return totalDocs || 0
 
     case 'score':
-      const avgResult = await db
-        .select({
-          average: sql<number>`avg(score)`,
-        })
-        .from(courseProgress)
-        .where(
-          and(
-            eq(courseProgress.userId, userId),
-            gte(courseProgress.completedAt, timeframeFilter)
-          )
-        )
-      return avgResult[0]?.average || 0
+      const scores = docs.map((doc: Progress) => doc.overallProgress || 0)
+      return scores.length ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0
 
     default:
       throw new Error(`Unsupported metric for course progress: ${metric}`)
@@ -97,34 +95,28 @@ async function getCourseProgress(
 async function getQuizProgress(
   userId: string,
   metric: string,
-  timeframeFilter: Date
+  timeframeFilter: Date,
 ): Promise<number> {
+  const { docs } = await payload.find({
+    collection: 'progress',
+    where: {
+      student: { equals: userId },
+    },
+  })
+
+  const quizAttempts = docs
+    .flatMap((doc: Progress) => doc.quizAttempts || [])
+    .filter((attempt: QuizAttempt) => new Date(attempt.completedAt) > timeframeFilter)
+
   switch (metric) {
     case 'count':
-      const result = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(quizAttempts)
-        .where(
-          and(
-            eq(quizAttempts.userId, userId),
-            gte(quizAttempts.completedAt, timeframeFilter)
-          )
-        )
-      return result[0]?.count || 0
+      return quizAttempts.length
 
     case 'score':
-      const avgResult = await db
-        .select({
-          average: sql<number>`avg(score)`,
-        })
-        .from(quizAttempts)
-        .where(
-          and(
-            eq(quizAttempts.userId, userId),
-            gte(quizAttempts.completedAt, timeframeFilter)
-          )
-        )
-      return avgResult[0]?.average || 0
+      return quizAttempts.length
+        ? quizAttempts.reduce((sum: number, attempt: QuizAttempt) => sum + attempt.score, 0) /
+            quizAttempts.length
+        : 0
 
     default:
       throw new Error(`Unsupported metric for quiz progress: ${metric}`)
@@ -134,47 +126,40 @@ async function getQuizProgress(
 async function getAssignmentProgress(
   userId: string,
   metric: string,
-  timeframeFilter: Date
+  timeframeFilter: Date,
 ): Promise<number> {
+  const { docs, totalDocs } = await payload.find({
+    collection: 'progress',
+    where: {
+      and: [
+        { student: { equals: userId } },
+        { completedAt: { greater_than: timeframeFilter.toISOString() } },
+      ],
+    },
+  })
+
   switch (metric) {
     case 'count':
-      const result = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(assignments)
-        .where(
-          and(
-            eq(assignments.userId, userId),
-            gte(assignments.submittedAt, timeframeFilter)
-          )
-        )
-      return result[0]?.count || 0
+      return totalDocs || 0
 
     case 'score':
-      const avgResult = await db
-        .select({
-          average: sql<number>`avg(score)`,
-        })
-        .from(assignments)
-        .where(
-          and(
-            eq(assignments.userId, userId),
-            gte(assignments.submittedAt, timeframeFilter)
-          )
-        )
-      return avgResult[0]?.average || 0
+      const scores = docs.map((doc: Progress) => doc.overallProgress || 0)
+      return scores.length ? scores.reduce((a: number, b: number) => a + b, 0) / scores.length : 0
 
     default:
       throw new Error(`Unsupported metric for assignment progress: ${metric}`)
   }
 }
 
-async function getStreakProgress(
-  userId: string,
-  metric: string
-): Promise<number> {
-  const streak = await db.query.streaks.findFirst({
-    where: eq(streaks.userId, userId),
+async function getStreakProgress(userId: string, metric: string): Promise<number> {
+  const { docs } = await payload.find({
+    collection: 'streaks',
+    where: {
+      student: { equals: userId },
+    },
+    limit: 1,
   })
+  const streak = docs[0]
 
   switch (metric) {
     case 'count':
@@ -189,22 +174,26 @@ async function getStreakProgress(
 async function getDiscussionProgress(
   userId: string,
   metric: string,
-  timeframeFilter: Date
+  timeframeFilter: Date,
 ): Promise<number> {
+  const { docs } = await payload.find({
+    collection: 'progress',
+    where: {
+      student: { equals: userId },
+    },
+    limit: 1,
+  })
+  const progress = docs[0]
+
+  const discussions = progress?.discussions || []
+  const filteredDiscussions = discussions.filter(
+    (d: Discussion) => new Date(d.participatedAt) > timeframeFilter,
+  )
+
   switch (metric) {
     case 'count':
-      const result = await db
-        .select({ count: sql<number>`count(*)` })
-        .from(discussions)
-        .where(
-          and(
-            eq(discussions.userId, userId),
-            gte(discussions.createdAt, timeframeFilter)
-          )
-        )
-      return result[0]?.count || 0
-
+      return filteredDiscussions.length
     default:
       throw new Error(`Unsupported metric for discussion progress: ${metric}`)
   }
-} 
+}

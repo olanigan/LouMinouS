@@ -32,7 +32,7 @@ export const Courses: CollectionConfig = {
         },
       }
     },
-    create: ({ req: { user } }: AccessArgs) => 
+    create: ({ req: { user } }: AccessArgs) =>
       user?.role === 'admin' || user?.role === 'instructor',
     update: ({ req: { user } }: AccessArgs) => {
       if (user?.role === 'admin') return true
@@ -312,7 +312,7 @@ export const Courses: CollectionConfig = {
                 },
               },
             })
-            
+
             if (currentEnrollments.totalDocs >= data.enrollment.capacity) {
               throw new Error('Course has reached maximum enrollment capacity')
             }
@@ -323,4 +323,4 @@ export const Courses: CollectionConfig = {
       },
     ],
   },
-} 
+}

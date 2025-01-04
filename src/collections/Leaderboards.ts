@@ -28,9 +28,9 @@ export const Leaderboards: CollectionConfig = {
       name: 'tenant',
       type: 'relationship',
       relationTo: 'tenants',
-      required: true,
       admin: {
         description: 'Tenant this leaderboard belongs to',
+        condition: (data) => !data?.isGlobal,
       },
       index: true,
     },
@@ -170,6 +170,16 @@ export const Leaderboards: CollectionConfig = {
     delete: ({ req: { user } }: AccessArgs) => user?.role === 'admin',
   },
   hooks: {
+    beforeValidate: [
+      ({ data, operation }) => {
+        if (operation === 'create' || operation === 'update') {
+          if (!data?.isGlobal && !data?.tenant) {
+            throw new Error('Tenant is required when leaderboard is not global')
+          }
+        }
+        return data
+      },
+    ],
     beforeChange: [
       async ({ data, req, operation }) => {
         if (operation === 'create' && !data.tenant && !data.isGlobal && req.user) {
@@ -182,4 +192,4 @@ export const Leaderboards: CollectionConfig = {
       },
     ],
   },
-} 
+}

@@ -1,20 +1,24 @@
 # Phase 3: Gamification System
 
 ## Summary
-This phase implements the gamification system using:
+
+This phase implements the gamification system using Payload CMS collections for:
+
 1. Points and levels
 2. Achievements and badges
 3. Leaderboards
 4. Streaks and rewards
 
 **Key Components:**
-- Achievement tracking
-- Point calculation
-- Leaderboard system
-- Reward distribution
+
+- Achievement tracking through Payload collections
+- Point calculation using server actions
+- Real-time leaderboard system
+- Streak tracking and rewards
 
 **Expected Outcome:**
 A complete gamification system with:
+
 - Automated point tracking
 - Achievement unlocking
 - Real-time leaderboards
@@ -23,6 +27,7 @@ A complete gamification system with:
 ## 3.1 Points and Levels
 
 ### Configure Points Collection
+
 Create `collections/Points.ts`:
 
 ```typescript
@@ -42,14 +47,14 @@ export const Points: CollectionConfig = {
       if (user?.role === 'instructor') {
         return {
           'student.tenant': {
-            equals: user?.tenant
-          }
+            equals: user?.tenant,
+          },
         }
       }
       return {
         student: {
-          equals: user?.id
-        }
+          equals: user?.id,
+        },
       }
     },
     create: () => false, // Only created by system
@@ -111,6 +116,7 @@ export const Points: CollectionConfig = {
 ```
 
 ### Configure Levels Collection
+
 Create `collections/Levels.ts`:
 
 ```typescript
@@ -206,6 +212,7 @@ export const Levels: CollectionConfig = {
 ## 3.2 Achievements and Badges
 
 ### Configure Achievements Collection
+
 Create `collections/Achievements.ts`:
 
 ```typescript
@@ -316,6 +323,7 @@ export const Achievements: CollectionConfig = {
 ```
 
 ### Configure Badges Collection
+
 Create `collections/Badges.ts`:
 
 ```typescript
@@ -386,6 +394,7 @@ export const Badges: CollectionConfig = {
 ## 3.3 Leaderboards
 
 ### Configure Leaderboards Collection
+
 Create `collections/Leaderboards.ts`:
 
 ```typescript
@@ -403,8 +412,8 @@ export const Leaderboards: CollectionConfig = {
       if (isAdmin(user)) return true
       return {
         tenant: {
-          equals: user?.tenant
-        }
+          equals: user?.tenant,
+        },
       }
     },
     create: isAdmin,
@@ -540,6 +549,7 @@ export const Leaderboards: CollectionConfig = {
 ## 3.4 Streaks
 
 ### Configure Streaks Collection
+
 Create `collections/Streaks.ts`:
 
 ```typescript
@@ -558,14 +568,14 @@ export const Streaks: CollectionConfig = {
       if (user?.role === 'instructor') {
         return {
           'student.tenant': {
-            equals: user?.tenant
-          }
+            equals: user?.tenant,
+          },
         }
       }
       return {
         student: {
-          equals: user?.id
-        }
+          equals: user?.id,
+        },
       }
     },
     create: () => false, // Only created by system
@@ -652,95 +662,22 @@ export const Streaks: CollectionConfig = {
 }
 ```
 
-## 3.5 Database Optimizations
-
-### Create Materialized Views
-Create `migrations/3_create_gamification_views.sql`:
-
-```sql
--- Points summary view
-CREATE MATERIALIZED VIEW points_summary AS
-SELECT 
-  student_id,
-  type,
-  SUM(amount) as total_points,
-  COUNT(*) as total_activities,
-  MAX(created_at) as last_activity
-FROM points
-GROUP BY student_id, type;
-
--- Achievement progress view
-CREATE MATERIALIZED VIEW achievement_progress AS
-SELECT 
-  u.id as user_id,
-  a.id as achievement_id,
-  a.type,
-  a.criteria->>'metric' as metric,
-  a.criteria->>'threshold' as threshold,
-  CASE 
-    WHEN p.total_points >= (a.criteria->>'threshold')::int THEN true 
-    ELSE false 
-  END as completed
-FROM users u
-CROSS JOIN achievements a
-LEFT JOIN points_summary p ON p.student_id = u.id;
-
--- Leaderboard cache view
-CREATE MATERIALIZED VIEW leaderboard_cache AS
-SELECT 
-  l.id as leaderboard_id,
-  u.id as user_id,
-  u.name,
-  COALESCE(p.total_points, 0) as points,
-  COALESCE(a.completed_count, 0) as achievements,
-  ROW_NUMBER() OVER (
-    PARTITION BY l.id 
-    ORDER BY 
-      CASE l.type 
-        WHEN 'points' THEN p.total_points 
-        WHEN 'achievements' THEN a.completed_count
-      END DESC
-  ) as rank
-FROM leaderboards l
-CROSS JOIN users u
-LEFT JOIN points_summary p ON p.student_id = u.id
-LEFT JOIN (
-  SELECT user_id, COUNT(*) as completed_count
-  FROM achievement_progress
-  WHERE completed = true
-  GROUP BY user_id
-) a ON a.user_id = u.id;
-
--- Create indexes
-CREATE UNIQUE INDEX idx_points_summary_student_type 
-ON points_summary(student_id, type);
-
-CREATE UNIQUE INDEX idx_achievement_progress_user_achievement 
-ON achievement_progress(user_id, achievement_id);
-
-CREATE UNIQUE INDEX idx_leaderboard_cache_board_user 
-ON leaderboard_cache(leaderboard_id, user_id);
-
--- Create refresh function
-CREATE OR REPLACE FUNCTION refresh_gamification_views()
-RETURNS void AS $$
-BEGIN
-  REFRESH MATERIALIZED VIEW CONCURRENTLY points_summary;
-  REFRESH MATERIALIZED VIEW CONCURRENTLY achievement_progress;
-  REFRESH MATERIALIZED VIEW CONCURRENTLY leaderboard_cache;
-END;
-$$ LANGUAGE plpgsql;
-
--- Schedule refresh
-SELECT cron.schedule(
-  'refresh-gamification-views',
-  '*/5 * * * *', -- Every 5 minutes
-  'SELECT refresh_gamification_views()'
-);
-```
-
 ## Next Steps
-- Set up user interfaces
-- Implement notifications
-- Configure analytics
-- Set up admin dashboards
+
+1. Set up user interfaces for:
+   - Achievement tracking
+   - Leaderboards
+   - Point history
+   - Level progression
+2. Implement notifications for:
+   - Achievement unlocks
+   - Level ups
+   - Streak milestones
+3. Configure analytics for:
+   - Engagement metrics
+   - Achievement completion rates
+   - Popular achievements
+4. Set up admin dashboards for:
+   - Gamification metrics
+   - User progress
+   - System performance

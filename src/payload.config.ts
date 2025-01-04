@@ -36,27 +36,27 @@ export default buildConfig({
   },
   editor: editorConfig,
   collections: [
-    Users,
-    Media,
     Tenants,
     StudentSettings,
+    Users,
+    Progress,
+    Points,
+    Levels,
+    Achievements,
+    Badges,
+    Streaks,
+    Leaderboards,
+    Enrollments,
     Courses,
     Modules,
     Lessons,
-    Progress,
-    Enrollments,
-    Levels,
-    Points,
-    Badges,
-    Achievements,
-    Leaderboards,
-    Streaks
+    Media,
   ],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL,
       max: 10,
-    }
+    },
   }),
   typescript: {
     outputFile: 'src/payload-types.ts',
@@ -67,7 +67,7 @@ export default buildConfig({
   upload: {
     limits: {
       fileSize: 5000000, // 5MB
-    }
+    },
   },
   csrf: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
   cors: [process.env.PAYLOAD_PUBLIC_SERVER_URL || 'http://localhost:3000'],
